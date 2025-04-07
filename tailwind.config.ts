@@ -108,7 +108,7 @@ export default {
         'pulse-wave': 'pulse-wave 2s infinite'
       },
       fontFamily: {
-        sans: ['"ZCOOL QingKe HuangYou"', 'sans-serif'],
+        sans: ['"Noto Sans SC"', 'sans-serif'],
       }
     }
   },
