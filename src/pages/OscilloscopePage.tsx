@@ -1,12 +1,10 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Oscilloscope from "@/components/Oscilloscope";
 import { CircuitProvider } from "@/contexts/CircuitContext";
 import GuidanceModule from "@/components/GuidanceModule";
-import { ArrowLeft, Waveform, GaugeCircle, BookOpen } from "lucide-react";
+import { ArrowLeft, AudioWaveform, GaugeCircle, BookOpen } from "lucide-react";
 
-// 示波器实验指导步骤
 const oscilloscopeSteps = [
   {
     id: "intro",
@@ -45,7 +43,7 @@ const OscilloscopePage = () => {
             </Link>
             <div className="flex items-center gap-3">
               <div className="bg-blue-600 p-1.5 rounded-lg text-white">
-                <Waveform className="w-5 h-5" />
+                <AudioWaveform className="w-5 h-5" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">虚拟示波器</h1>
             </div>
@@ -61,7 +59,7 @@ const OscilloscopePage = () => {
                 <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg overflow-hidden border border-blue-200 dark:border-blue-900">
                   <div className="bg-gradient-to-r from-blue-100 to-indigo-100 dark:from-blue-900/40 dark:to-indigo-900/40 py-3 px-4">
                     <h2 className="text-lg font-medium text-blue-800 dark:text-blue-300 flex items-center gap-2">
-                      <Waveform className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <AudioWaveform className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                       示波器控制面板
                     </h2>
                   </div>
