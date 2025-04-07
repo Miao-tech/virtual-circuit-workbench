@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -97,5 +91,45 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'ZCOOL QingKe HuangYou', sans-serif;
+  }
+
+  .oscilloscope-grid {
+    background-size: 20px 20px;
+    background-image:
+      linear-gradient(to right, rgba(37, 99, 235, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(37, 99, 235, 0.1) 1px, transparent 1px);
+  }
+  
+  .oscilloscope-wave {
+    stroke: theme('colors.instrument.waveform');
+    stroke-width: 2px;
+    fill: none;
+  }
+  
+  .instrument-display {
+    @apply bg-instrument-dark text-instrument-light rounded-lg p-4;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  .instrument-control {
+    @apply bg-gray-800 text-instrument-light rounded-lg p-2;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  }
+  
+  .instrument-knob {
+    @apply bg-gray-700 border-2 border-gray-600 rounded-full relative;
+    width: 60px;
+    height: 60px;
+  }
+  
+  .instrument-knob::after {
+    content: '';
+    @apply absolute bg-white rounded-full;
+    width: 4px;
+    height: 20px;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
   }
 }
