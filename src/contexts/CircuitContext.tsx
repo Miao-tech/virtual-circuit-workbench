@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // 定义电路数据类型
@@ -15,7 +14,7 @@ type CircuitContextType = {
   circuitData: CircuitData;
   updateCircuitData: (data: Partial<CircuitData>) => void;
   generateWaveData: (timeBase: number, verticalScale: number) => { x: number, y: number }[];
-  getMeasurement: (type: 'dcVoltage' | 'acVoltage' | 'dcCurrent' | 'acCurrent' | 'resistance') => number;
+  getMeasurement: (type: 'dcVoltage' | 'acVoltage' | 'dcCurrent' | 'acCurrent' | 'resistance' | 'continuity') => number;
 };
 
 // 创建上下文
@@ -65,7 +64,7 @@ export const CircuitProvider: React.FC<{ children: ReactNode }> = ({ children })
     return points;
   };
 
-  const getMeasurement = (type: 'dcVoltage' | 'acVoltage' | 'dcCurrent' | 'acCurrent' | 'resistance'): number => {
+  const getMeasurement = (type: 'dcVoltage' | 'acVoltage' | 'dcCurrent' | 'acCurrent' | 'resistance' | 'continuity'): number => {
     switch (type) {
       case 'dcVoltage':
         return circuitData.amplitude * 0.95; // 直流电压
@@ -77,6 +76,8 @@ export const CircuitProvider: React.FC<{ children: ReactNode }> = ({ children })
         return circuitData.amplitude / 10 * 0.707; // 交流电流有效值
       case 'resistance':
         return 1000; // 电阻值
+      case 'continuity':
+        return Math.random() < 0.5 ? 0.05 : 1; // 随机返回导通或断开状态
       default:
         return 0;
     }

@@ -1,10 +1,12 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useCircuit } from '@/contexts/CircuitContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import UARTController, { UARTControllerRef } from './UARTController';
+import { useNavigate } from 'react-router-dom';
+import { GaugeCircle } from 'lucide-react';
 
 const Oscilloscope = () => {
   const { generateWaveData, circuitData, updateCircuitData } = useCircuit();
@@ -13,6 +15,10 @@ const Oscilloscope = () => {
   const [trigger, setTrigger] = useState<number>(0);
   const [wavePath, setWavePath] = useState<string>("");
   const [running, setRunning] = useState<boolean>(true);
+  const [waveType, setWaveType] = useState<string>("sine");
+  const [frequency, setFrequency] = useState<number>(1);
+  const uartControllerRef = useRef<UARTControllerRef>(null);
+  const navigate = useNavigate();
   
   const SVG_WIDTH = 600;
   const SVG_HEIGHT = 400;
@@ -38,8 +44,90 @@ const Oscilloscope = () => {
     return () => clearInterval(interval);
   }, [timeBase, verticalScale, running, circuitData, generateWaveData]);
   
+  // 处理波形类型和频率变化
+  const handleWaveTypeChange = async (type: string) => {
+    setWaveType(type);
+    updateCircuitData({ waveType: type as any });
+    if (uartControllerRef.current) {
+      let command: number[];
+      switch (type) {
+        case "sine":
+          command = frequency === 1 ? [0x0A, 0x01, 0x01, 0xFE] : [0x0A, 0x01, 0x64, 0xFE];
+          break;
+        case "triangle":
+          command = frequency === 1 ? [0x0A, 0x02, 0x01, 0xFE] : [0x0A, 0x02, 0x64, 0xFE];
+          break;
+        case "square":
+          command = frequency === 1 ? [0x0A, 0x03, 0x01, 0xFE] : [0x0A, 0x03, 0x64, 0xFE];
+          break;
+        default:
+          return;
+      }
+      await uartControllerRef.current.sendCommand(command);
+    }
+  };
+
+  // 处理频率变化
+  const handleFrequencyChange = async (freq: number) => {
+    setFrequency(freq);
+    updateCircuitData({ frequency: freq });
+    if (uartControllerRef.current) {
+      let command: number[];
+      switch (waveType) {
+        case "sine":
+          command = freq === 1 ? [0x0A, 0x01, 0x01, 0xFE] : [0x0A, 0x01, 0x64, 0xFE];
+          break;
+        case "triangle":
+          command = freq === 1 ? [0x0A, 0x02, 0x01, 0xFE] : [0x0A, 0x02, 0x64, 0xFE];
+          break;
+        case "square":
+          command = freq === 1 ? [0x0A, 0x03, 0x01, 0xFE] : [0x0A, 0x03, 0x64, 0xFE];
+          break;
+        default:
+          return;
+      }
+      await uartControllerRef.current.sendCommand(command);
+    }
+  };
+
+  // 处理示波器启停
+  const handleOscilloscopeControl = async (start: boolean) => {
+    if (uartControllerRef.current) {
+      try {
+        const command = start ? [0x08, 0x00, 0x01, 0xFE] : [0x07, 0x00, 0x00, 0xFE];
+        await uartControllerRef.current.sendCommand(command);
+        setRunning(start);
+        // 如果停止示波器，清除波形
+        if (!start) {
+          setWavePath("");
+        }
+      } catch (error) {
+        console.error('Error controlling oscilloscope:', error);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-2xl font-bold">示波器</h2>
+        <div className="flex gap-2">
+          <Button 
+            variant={running ? "destructive" : "default"} 
+            onClick={() => handleOscilloscopeControl(!running)}
+          >
+            {running ? "停止" : "启动"}示波器
+          </Button>
+          <Button 
+            variant="outline" 
+            className="border-green-300 dark:border-green-700 text-green-700 dark:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 flex items-center gap-2"
+            onClick={() => navigate('/multimeter')}
+          >
+            <GaugeCircle className="w-4 h-4" />
+            切换到万用表
+          </Button>
+        </div>
+      </div>
       <Card className="instrument-display">
         <CardContent className="p-4">
           <div className="oscilloscope-grid bg-black w-full h-[400px] rounded-lg relative">
@@ -139,56 +227,54 @@ const Oscilloscope = () => {
                   className="my-2"
                 />
               </div>
-              
-              <Button 
-                variant={running ? "destructive" : "default"} 
-                size="sm" 
-                className="w-full"
-                onClick={() => setRunning(!running)}
-              >
-                {running ? "停止" : "运行"}
-              </Button>
             </div>
           </CardContent>
         </Card>
       </div>
       
       {/* 波形设置 */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card className="instrument-control">
           <CardContent className="p-4">
-            <h3 className="text-center mb-2">波形类型</h3>
-            <Select 
-              defaultValue={circuitData.waveType} 
-              onValueChange={(value) => updateCircuitData({ waveType: value as any })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择波形类型" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sine">正弦波</SelectItem>
-                <SelectItem value="square">方波</SelectItem>
-                <SelectItem value="triangle">三角波</SelectItem>
-                <SelectItem value="sawtooth">锯齿波</SelectItem>
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-        
-        <Card className="instrument-control">
-          <CardContent className="p-4">
-            <h3 className="text-center mb-2">频率调整</h3>
-            <div className="text-center">
-              <span className="text-xs">{circuitData.frequency} Hz</span>
-              <Slider
-                defaultValue={[1000]}
-                min={10}
-                max={2000}
-                step={10}
-                value={[circuitData.frequency]}
-                onValueChange={(value) => updateCircuitData({ frequency: value[0] })}
-                className="my-2"
-              />
+            <h3 className="text-center mb-2">波形设置</h3>
+            <div className="space-y-4">
+              <div className="text-center text-sm text-gray-500 mb-2">
+                波形类型：{
+                  waveType === "sine" ? "正弦波" :
+                  waveType === "triangle" ? "三角波" :
+                  "矩形波"
+                } {frequency}Hz
+              </div>
+              <Select 
+                value={waveType}
+                onValueChange={handleWaveTypeChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择波形类型" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sine">正弦波</SelectItem>
+                  <SelectItem value="triangle">三角波</SelectItem>
+                  <SelectItem value="square">矩形波</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant={frequency === 1 ? "default" : "secondary"} 
+                  className="flex-1"
+                  onClick={() => handleFrequencyChange(1)}
+                >
+                  1Hz
+                </Button>
+                <Button 
+                  variant={frequency === 100 ? "default" : "secondary"} 
+                  className="flex-1"
+                  onClick={() => handleFrequencyChange(100)}
+                >
+                  100Hz
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
