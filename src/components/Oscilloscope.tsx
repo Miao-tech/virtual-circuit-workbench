@@ -14,7 +14,7 @@ const Oscilloscope = () => {
   const [verticalScale, setVerticalScale] = useState<number>(1);
   const [trigger, setTrigger] = useState<number>(0);
   const [wavePath, setWavePath] = useState<string>("");
-  const [running, setRunning] = useState<boolean>(true);
+  const [running, setRunning] = useState<boolean>(false);
   const [waveType, setWaveType] = useState<string>("sine");
   const [frequency, setFrequency] = useState<number>(1);
   const uartControllerRef = useRef<UARTControllerRef>(null);
@@ -92,9 +92,11 @@ const Oscilloscope = () => {
 
   // 处理示波器启停
   const handleOscilloscopeControl = async (start: boolean) => {
+    console.log('handleOscilloscopeControl', start, uartControllerRef.current);
     if (uartControllerRef.current) {
       try {
         const command = start ? [0x08, 0x00, 0x01, 0xFE] : [0x07, 0x00, 0x00, 0xFE];
+        console.log('Sending command:', command);
         await uartControllerRef.current.sendCommand(command);
         setRunning(start);
         // 如果停止示波器，清除波形
